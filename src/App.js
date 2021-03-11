@@ -1,8 +1,87 @@
 import logo from './logo.svg';
 import './App.css';
 import { GoogleLogin } from 'react-google-login';
+import { useEffect, useState } from 'react';
+import { messaging } from './firebase';
+
+const login = () => {
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({"email":"mail4@mail.com","password":"s7mQZRFjOF"});
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  return fetch("http://localhost:3000/api/v1/sessions/", requestOptions)
+    .then((r) => {
+      if (!r.ok) {
+        return Promise.reject("could set the web push token")
+      } else {
+        return r.json()
+      }
+    })
+    .catch(error => console.log('error', error));
+}
+
+const updateUserPushToken = ({ pushToken, jwtToken }) => {
+  var myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${jwtToken}`);
+
+  var formdata = new FormData();
+  formdata.append("webPushNotificationToken", pushToken);
+
+  var requestOptions = {
+    method: 'PUT',
+    headers: myHeaders,
+    body: formdata,
+    redirect: 'follow'
+  };
+
+  return fetch("http://localhost:3000/api/v1/users/me", requestOptions)
+  .then((r) => {
+    if (!r.ok) {
+      return Promise.reject("could set the web push token")
+    } else {
+      return r.json()
+    }
+  })
+  .then(result => console.log(result))
+  .catch(error => console.log('error', error));
+}
+
+const postMessage = ({ jwtToken }) => {
+  var myHeaders = new Headers();
+  myHeaders.append("Authorization", `Bearer ${jwtToken}`);
+  myHeaders.append("Content-Type", "application/json");
+
+  var raw = JSON.stringify({"network":"telegram","text":"some","starred":false,"clientId":"db9aa797-caca-4985-99f5-946ddfe690df"});
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  return fetch("http://localhost:3000/api/v1/messages", requestOptions)
+    .then((r) => {
+      if (!r.ok) {
+        return Promise.reject("error creating the message")
+      } else {
+        return r.json()
+      }
+    })
+    .then(result => console.log(result))
+    .catch(error => console.log('error', error));
+}
 
 function App() {
+  const [jwtToken, setJwtToken] = useState("")
   return (
     <div className="App">
       <header className="App-header">
@@ -19,7 +98,27 @@ function App() {
           Learn React
         </a>
       </header>
-      <GoogleLogin
+      <button onClick={() => {
+        login()
+        .then((r) => {
+          setJwtToken(r.token)
+          return Notification.requestPermission()
+        })
+        .then(async function(granted) {
+          console.log({granted})
+          return messaging.getToken()
+        })
+        .then((firebaseToken) => {
+          return updateUserPushToken({ pushToken: firebaseToken, jwtToken })
+        })
+        .then(() => {
+          return postMessage({ jwtToken })
+        })
+        .catch(function(err) {
+          console.log(err);
+        });
+      }}>Ask message</button>
+      {/*<GoogleLogin
         clientId="855173656817-auvud7iccrujivpsan50pgph97di7ho4.apps.googleusercontent.com"
         buttonText="Login"
         responseType="code"
@@ -35,7 +134,7 @@ function App() {
           "https://www.googleapis.com/auth/profile.emails.read",
           "https://www.googleapis.com/auth/user.addresses.read"
         ].join(' ')}
-      />
+      />*/}
     </div>
   );
 }
