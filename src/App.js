@@ -4,6 +4,16 @@ import { GoogleLogin } from 'react-google-login';
 import { useEffect, useState } from 'react';
 import { messaging } from './firebase';
 
+messaging.onMessage((payload) => {
+  //notification when browser is on focus
+  console.log('Message received. ', payload);
+  var options = {
+    body: payload.notification.body,
+    icon: payload.notification.icon || payload.notification.image || "https://images.pexels.com/photos/853168/pexels-photo-853168.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+  };
+  new Notification(payload.notification.title, options)
+});
+
 const login = () => {
   var myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
@@ -118,8 +128,8 @@ function App() {
           console.log(err);
         });
       }}>Ask message</button>
-      {/*<GoogleLogin
-        clientId="855173656817-auvud7iccrujivpsan50pgph97di7ho4.apps.googleusercontent.com"
+      <GoogleLogin
+        clientId="766018113614-6dm1s0hnl6msinupb4l7ukpi69j9kmql.apps.googleusercontent.com"
         buttonText="Login"
         responseType="code"
         prompt='consent'
@@ -134,7 +144,7 @@ function App() {
           "https://www.googleapis.com/auth/profile.emails.read",
           "https://www.googleapis.com/auth/user.addresses.read"
         ].join(' ')}
-      />*/}
+      />
     </div>
   );
 }

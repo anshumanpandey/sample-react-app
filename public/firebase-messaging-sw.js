@@ -13,6 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 messaging.setBackgroundMessageHandler(function(payload) {
+     //notification when browser is on background
      const promiseChain = clients
           .matchAll({
                type: "window",
